@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weapon Selection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen p-6">
+  <h1 class="text-2xl font-bold mb-6">Select a Weapon</h1>
+
+  <!-- Weapon Grid -->
+  <div id="gunsList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-3xl"></div>
+
+  <script>
+    // Example gun list
+    const guns = [
+      { name: "GROZA", img: "images/groza.png" },
+      { name: "KALASHNIKAVO", img: "images/kalashnikavo.png" },
+      { name: "ASSAULT-SMG", img: "images/assault-smg.png" },
+      { name: "PUMP-SHOTGUN", img: "images/pump-shotgun.png" },
+      { name: "SNIPER-RIFLE", img: "images/sniper-rifle.png" },
+    ];
+
+    const gunsList = document.getElementById("gunsList");
+
+    guns.forEach(gun => {
+      // Create card
+      const card = document.createElement("div");
+      card.className =
+        "bg-gray-800 p-4 rounded-xl flex flex-col items-center cursor-pointer hover:bg-gray-700 transition";
+
+      // Gun image
+      const img = document.createElement("img");
+      img.src = gun.img;
+      img.alt = gun.name;
+      img.className = "w-32 h-20 object-contain mb-2";
+
+      // Gun name
+      const name = document.createElement("span");
+      name.textContent = gun.name;
+      name.className = "font-semibold mb-2";
+
+      card.appendChild(img);
+      card.appendChild(name);
+
+      // ✅ When clicking a gun, go to member-confirm.html with gun + action
+      card.addEventListener("click", () => {
+        const action = localStorage.getItem("action") || "give"; // default to give if not found
+        window.location.href = `member-confirm.html?gun=${encodeURIComponent(gun.name)}&action=${encodeURIComponent(action)}`;
+      });
+
+      gunsList.appendChild(card);
+    });
+  </script>
+</body>
+</html>

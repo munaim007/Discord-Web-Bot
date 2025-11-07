@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Confirmation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen p-6">
+  <h1 class="text-2xl font-bold mb-6">Select Members</h1>
+
+  <ul id="membersList" class="w-full max-w-2xl flex flex-col gap-3"></ul>
+
+  <button id="confirmBtn" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl mt-6 w-40">Confirm</button>
+  <p id="status" class="mt-4 text-sm text-gray-400"></p>
+
+  <!-- 🔹 Confirmation Popup -->
+  <div id="popup" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-2xl shadow-xl p-6 w-96 text-center">
+      <h2 class="text-xl font-bold mb-4">Confirm Action</h2>
+      <p id="popupText" class="text-gray-300 mb-6"></p>
+      <div class="flex justify-center gap-4">
+        <button id="cancelPopup" class="bg-gray-600 hover:bg-gray-700 px-5 py-2 rounded-lg">Cancel</button>
+        <button id="okPopup" class="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 🧠 LOGIN CHECK
+    const user = localStorage.getItem("user");
+    if (!user) {
+      window.location.href = "login.html";
+    }
+
+    // 🧠 CATEGORY ACCESS PERMISSIONS
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get("category") || "weapons";
+    const gun = urlParams.get("gun") || "GROZA";
+    const action = urlParams.get("action") || "give";
+
+    // Define who can use what category
+    const permissions = {
+      weapons: ["Munaim", "Yousuf"],
+      vehicles: ["Spidey.x"],
+    };
+
+    // If user not allowed
+    if (!permissions[category]?.includes(user)) {
+      document.body.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-screen text-center">
+          <h1 class="text-3xl font-bold text-red-500">🚫 Access Denied</h1>
+          <p class="text-gray-400 mt-2">You are not authorized to access the <b>${category}</b> category.</p>
+          <button onclick="logout()" class="bg-gray-700 hover:bg-gray-800 mt-4 px-4 py-2 rounded">Logout</button>
+        </div>
+      `;
+      function logout() {
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
+      }
+      throw new Error("Unauthorized");
+    }
+
+    // ✅ MEMBER LIST
+    const members = [
+      { name: "1.RS-👑 MR.YOUSUF", img: "images/yousuf.png", id: "1151604406865903756" },
+      { name: "2.✪ SPIDY.x", img: "images/spidey.png", id: "1139990482030706708" },
+      { name: "3.PHOENIX", img: "images/phoenix.png", id: "1213490619431784448" },
+      { name: "4.Arbin-OP", img: "images/arbin.png", id: "1012377654877503588" },
+      { name: "5.ZDEX 4", img: "images/samir.png", id: "1308923441990336513" },
+      { name: "6.Munaim", img: "images/munaim.png", id: "1078660587313180754" },
+      { name: "7.CHECK PO!NT", img: "images/checkpoint.png", id: "1317154430105161830" },
+      { name: "8.RS-POBON", img: "images/pobon.png", id: "930091970540470333" },
+      { name: "9.RS-SOIKOT", img: "images/soikot.png", id: "692750954511990884" },
+      { name: "10.THE WALTER [RS]", img: "images/walter.png", id: "602375410017239083" },
+      { name: "11.!! Mr NILOY", img: "images/niloy.png", id: "915867108838088704" },
+      { name: "12.RS-ALIF", img: "images/alif.png", id: "1009510456588783716" },
+      { name: "13.RS. Rabby", img: "images/rabby.png", id: "1098277830518906881" },
+      { name: "14.RS-RAMIM", img: "images/ramim.png", id: "1200448457937272835" },
+      { name: "15.RS-DNGR", img: "images/dngr.png", id: "1390225059184115714" },
+      { name: "16.RS-AYON", img: "images/ayon.png", id: "1049210916601860096" },
+      { name: "17.PG / Ratul Hassan", img: "images/ratul.png", id: "834000983876042773" },
+      { name: "18.kallu khan", img: "images/kallu.png", id: "1272523990090387571" },
+      { name: "19.Afif Hasan Tahmid", img: "images/afif.png", id: "1294286095768616984" },
+    ];
+
+    const membersList = document.getElementById("membersList");
+    const popup = document.getElementById("popup");
+    const popupText = document.getElementById("popupText");
+    const cancelPopup = document.getElementById("cancelPopup");
+    const okPopup = document.getElementById("okPopup");
+    let selectedMembers = [];
+
+    // 🧾 Render Members
+    members.forEach(member => {
+      const li = document.createElement("li");
+      li.className = "flex items-center justify-between bg-gray-800 hover:bg-gray-700 transition rounded-xl px-4 py-3";
+
+      const left = document.createElement("div");
+      left.className = "flex items-center gap-3";
+
+      const img = document.createElement("img");
+      img.src = member.img;
+      img.alt = member.name;
+      img.className = "w-10 h-10 rounded-full object-cover border-2 border-gray-600";
+
+      const span = document.createElement("span");
+      span.textContent = member.name;
+      span.className = "font-semibold text-lg";
+
+      left.appendChild(img);
+      left.appendChild(span);
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "w-5 h-5 accent-blue-600";
+
+      li.appendChild(left);
+      li.appendChild(checkbox);
+      membersList.appendChild(li);
+    });
+
+    // ✅ Confirm Button Click
+    document.getElementById("confirmBtn").addEventListener("click", () => {
+      selectedMembers = [];
+      membersList.querySelectorAll("li").forEach(li => {
+        const checkbox = li.querySelector("input[type='checkbox']");
+        if (checkbox.checked) {
+          const member = members.find(m => m.name === li.querySelector("span").textContent);
+          selectedMembers.push(member);
+        }
+      });
+
+      if (selectedMembers.length === 0) {
+        alert("❌ Please select at least one member.");
+        return;
+      }
+
+      const names = selectedMembers.map(m => m.name).join(", ");
+      popupText.textContent = `Are ${names} ${action === "give" ? "receiving" : "returning"} the ${gun}?`;
+      popup.classList.remove("hidden");
+    });
+
+    // Popup Cancel
+    cancelPopup.addEventListener("click", () => popup.classList.add("hidden"));
+
+    // Popup Confirm
+    okPopup.addEventListener("click", async () => {
+      popup.classList.add("hidden");
+
+      const message = selectedMembers
+        .map(m => `<@${m.id}> ${action === "give" ? "has received" : "has returned"} a **${gun}**`)
+        .join("\n");
+
+      document.getElementById("status").textContent = "⏳ Sending to Discord...";
+
+      try {
+        const res = await fetch("/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category: "weapon", message }),
+        });
+
+        if (!res.ok) throw new Error("Failed to send");
+        document.getElementById("status").textContent = "✅ Message sent!";
+        setTimeout(() => window.location.reload(), 1200);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("status").textContent = "❌ Failed to send message.";
+      }
+    });
+
+    // Logout Function
+    function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

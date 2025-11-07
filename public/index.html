@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discord Control Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen">
+  <h1 class="text-3xl font-bold mb-6">⚙️ Discord Control Panel</h1>
+
+  <div class="grid grid-cols-1 gap-4 w-64">
+    <!-- Weapon Button -->
+    <div class="relative">
+      <button id="weaponBtn" onclick="toggleWeaponOptions()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl w-full text-left">
+        Weapon
+      </button>
+
+      <!-- Give/Take dropdown hidden initially -->
+      <div id="weaponOptions" class="mt-2 hidden flex flex-col">
+        <span class="text-gray-300 mb-1 ml-2">Option:</span>
+        <select id="weaponSelect" class="bg-gray-800 text-white px-3 py-2 rounded-xl w-40 ml-2">
+          <option value="give">Give</option>
+          <option value="take">Take</option>
+        </select>
+        <button onclick="confirmWeaponAction()" class="bg-blue-600 hover:bg-blue-700 mt-2 px-4 py-2 rounded-xl w-32 ml-2">
+          Confirm
+        </button>
+      </div>
+    </div>
+
+    <!-- Gang Fund Button -->
+    <button onclick="sendAction('fund')" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl">
+      Gang Fund
+    </button>
+  </div>
+
+  <p id="status" class="mt-6 text-sm text-gray-400"></p>
+
+  <script>
+    // Toggle dropdown visibility
+    function toggleWeaponOptions() {
+      const options = document.getElementById("weaponOptions");
+      options.classList.toggle("hidden");
+    }
+
+    // Save action (give/take) and redirect
+    function confirmWeaponAction() {
+      const action = document.getElementById("weaponSelect").value;
+
+      // Save the action so other pages can access it
+      localStorage.setItem("action", action);
+
+      document.getElementById("status").innerText = `⚙️ Selected: ${action.toUpperCase()} mode`;
+
+      // Redirect to weapon selection page
+      window.location.href = "weapons.html";
+    }
+
+    // Gang Fund Button Logic
+    async function sendAction(category) {
+      document.getElementById("status").innerText = "⏳ Sending...";
+      try {
+        const res = await fetch("/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category }),
+        });
+        const text = await res.text();
+        document.getElementById("status").innerText = text;
+      } catch (err) {
+        document.getElementById("status").innerText = "❌ Error sending message.";
+      }
+    }
+  </script>
+</body>
+</html>
