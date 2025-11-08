@@ -143,30 +143,46 @@
   cancelPopup.addEventListener("click", () => popup.classList.add("hidden"));
 
   // ✅ Popup Confirm → Send to backend
-  okPopup.addEventListener("click", async () => {
-    popup.classList.add("hidden");
+okPopup.addEventListener("click", async () => {
+  popup.classList.add("hidden");
 
-    const message = selectedMembers
-      .map(m => `<@${m.id}> ${action === "give" ? "has received" : "has returned"} a **${gun}**`)
-      .join("\n");
+  const message = selectedMembers
+    .map(m => {
+      if (action === "pending") {
+        return `<@${m.id}> **give back your** **${gun}** **to** <@&1358819253209272649> **ASAP**`;
+      } else {
+        return `<@${m.id}> ${action === "give" ? "has received" : "has returned"} a **${gun}**`;
+      }
+    })
+    .join("\n");
 
-    document.getElementById("status").textContent = "⏳ Sending to Discord...";
+  document.getElementById("status").textContent = "⏳ Sending to Discord...";
 
-    try {
-      const res = await fetch("/send-weapons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, action }),
-      });
-
-      if (!res.ok) throw new Error("Failed to send");
-      document.getElementById("status").textContent = "✅ Message sent!";
-      setTimeout(() => window.location.reload(), 1200);
-    } catch (err) {
-      console.error(err);
-      document.getElementById("status").textContent = "❌ Failed to send message.";
+  try {
+    let webhookUrl;
+    if (action === "pending") {
+      webhookUrl = "https://discord.com/api/webhooks/1436809087672127489/TQHvNjzuPNRW9CR22idPLettusxSPFbByIXae7glGtdowdwmqhpoIVuvNY9nBx3csIGy";
+    } else if (action === "take") {
+      webhookUrl = TAKE_WEBHOOK;
+    } else {
+      webhookUrl = GIVE_WEBHOOK;
     }
-  });
+
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: message }),
+    });
+
+    document.getElementById("status").textContent = "✅ Message sent!";
+    setTimeout(() => window.location.reload(), 1200);
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").textContent = "❌ Failed to send message.";
+  }
+});
+
+
 
   // Logout
   function logout() {
