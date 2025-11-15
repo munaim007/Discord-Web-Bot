@@ -89,10 +89,10 @@
   const okPopup = document.getElementById("okPopup");
   let selectedMembers = [];
 
-  // 🧾 Render Members
+  // 🧾 Render Members (full row clickable)
   members.forEach(member => {
     const li = document.createElement("li");
-    li.className = "flex items-center justify-between bg-gray-800 hover:bg-gray-700 transition rounded-xl px-4 py-3";
+    li.className = "flex items-center justify-between bg-gray-800 hover:bg-gray-700 transition rounded-xl px-4 py-3 cursor-pointer";
 
     const left = document.createElement("div");
     left.className = "flex items-center gap-3";
@@ -112,6 +112,13 @@
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.className = "w-5 h-5 accent-blue-600";
+
+    // Make the whole box clickable (toggle checkbox)
+    li.addEventListener("click", (e) => {
+      if (e.target !== checkbox) {
+        checkbox.checked = !checkbox.checked;
+      }
+    });
 
     li.appendChild(left);
     li.appendChild(checkbox);
@@ -135,54 +142,63 @@
     }
 
     const names = selectedMembers.map(m => m.name).join(", ");
-    popupText.textContent = `Are ${names} ${action === "give" ? "receiving" : "returning"} the ${gun}?`;
+    let actionText = "";
+
+if (action === "give") {
+  actionText = "receiving";
+} else if (action === "take") {
+  actionText = "returning";
+} else if (action === "pending") {
+  actionText = "requested to return";
+}
+
+popupText.textContent = `Are ${names} ${actionText} the ${gun}?`;
+
     popup.classList.remove("hidden");
   });
 
   // Popup Cancel
   cancelPopup.addEventListener("click", () => popup.classList.add("hidden"));
 
-  // ✅ Popup Confirm → Send to backend
-okPopup.addEventListener("click", async () => {
-  popup.classList.add("hidden");
+  // Popup Confirm → Send to backend
+  okPopup.addEventListener("click", async () => {
+    popup.classList.add("hidden");
 
-  const message = selectedMembers
-    .map(m => {
+    const message = selectedMembers
+      .map(m => {
+        if (action === "pending") {
+          return `<@${m.id}> **give back your** **${gun}** **to** <@&1358819253209272649> **ASAP**`;
+        } else {
+          return `<@${m.id}> ${action === "give" ? "has received" : "has returned"} a **${gun}**`;
+        }
+      })
+      .join("\n");
+
+    document.getElementById("status").textContent = "⏳ Sending to Discord...";
+
+    try {
+      let webhookUrl;
       if (action === "pending") {
-        return `<@${m.id}> **give back your** **${gun}** **to** <@&1358819253209272649> **ASAP**`;
+        webhookUrl = "https://discord.com/api/webhooks/1436809087672127489/TQHvNjzuPNRW9CR22idPLettusxSPFbByIXae7glGtdowdwmqhpoIVuvNY9nBx3csIGy";
+      } else if (action === "take") {
+        webhookUrl = "https://discord.com/api/webhooks/1436797184732561408/kJaO4qFGaoDsqNPFU63lcrecqizBt_UwfQSSi1MHH9nEsjoqAtogSmI4TKjBwQ7d3K4v";
       } else {
-        return `<@${m.id}> ${action === "give" ? "has received" : "has returned"} a **${gun}**`;
+        webhookUrl = "https://discord.com/api/webhooks/1436398826356215938/E4Ddf4eBJS5q1UWQPODs7diWZ9Oy7f6N2T7Jy44pSqq0JMdG_LUZLpG6tPJlSA9W4hIM";
       }
-    })
-    .join("\n");
 
-  document.getElementById("status").textContent = "⏳ Sending to Discord...";
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: message }),
+      });
 
-  try {
-    let webhookUrl;
-    if (action === "pending") {
-      webhookUrl = "https://discord.com/api/webhooks/1436809087672127489/TQHvNjzuPNRW9CR22idPLettusxSPFbByIXae7glGtdowdwmqhpoIVuvNY9nBx3csIGy";
-    } else if (action === "take") {
-      webhookUrl = "https://discord.com/api/webhooks/1436797184732561408/kJaO4qFGaoDsqNPFU63lcrecqizBt_UwfQSSi1MHH9nEsjoqAtogSmI4TKjBwQ7d3K4v";
-    } else {
-      webhookUrl = "https://discord.com/api/webhooks/1436398826356215938/E4Ddf4eBJS5q1UWQPODs7diWZ9Oy7f6N2T7Jy44pSqq0JMdG_LUZLpG6tPJlSA9W4hIM";
+      document.getElementById("status").textContent = "✅ Message sent!";
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      console.error(err);
+      document.getElementById("status").textContent = "❌ Failed to send message.";
     }
-
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: message }),
-    });
-
-    document.getElementById("status").textContent = "✅ Message sent!";
-    setTimeout(() => window.location.reload(), 1200);
-  } catch (err) {
-    console.error(err);
-    document.getElementById("status").textContent = "❌ Failed to send message.";
-  }
-});
-
-
+  });
 
   // Logout
   function logout() {
@@ -193,5 +209,3 @@ okPopup.addEventListener("click", async () => {
 
 </body>
 </html>
-
-
